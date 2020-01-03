@@ -55,7 +55,7 @@ static size_t StrLenEx(const char * s, DWORD terminator)
   DWORD trmn = (terminator & 0x000000FF) << 24 | (terminator & 0x0000FF00) << 8 |
                (terminator & 0x00FF0000) >> 8  | (terminator & 0xFF000000) >> 24;
   size_t len = 0;
-  while (*(PDWORD)s != terminator) {
+  while (*(PDWORD)s != trmn) {
     s++;
     len++;
   }
