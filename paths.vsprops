@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PropertySheetDisplayName>paths</_PropertySheetDisplayName>
+    <IntDir>$(SolutionDir)\.intermediates\$(ProjectName)\$(Platform)_$(Configuration)\</IntDir>
+    <LibDir>$(SolutionDir)lib\$(Platform)_$(Configuration)\</LibDir>
+    <fakeNtdllDir>$(SolutionDir)fake_ntdll\</fakeNtdllDir>
+    <fakeNtdllOut>$(LibDir)</fakeNtdllOut>
+    <wcpSrcPath>$(SolutionDir)src\</wcpSrcPath>
+    <wcpOutPath>$(SolutionDir)out\</wcpOutPath>
+    <wcpOutDir>$(wcpOutPath)\$(Platform)_$(Configuration)\</wcpOutDir>
+  </PropertyGroup>
+</Project>

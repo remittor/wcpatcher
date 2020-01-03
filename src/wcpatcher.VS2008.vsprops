@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioPropertySheet
+  ProjectType="Visual C++"
+  Version="8.00"
+  Name="wcpatcher"
+  InheritedPropertySheets="$(SolutionDir)\paths.VS2008.vsprops"
+  >
+  <Tool
+    Name="VCCLCompilerTool"
+    Optimization="1"
+    EnableIntrinsicFunctions="true"
+    AdditionalIncludeDirectories="win32common;..\extlibs\asmjit\src;..\extlibs\xxHash;"
+  />
+  <Tool
+    Name="VCLinkerTool"
+    AdditionalDependencies="fake_ntdll.lib asmjit.lib"
+    AdditionalLibraryDirectories="$(LibDir)"
+    GenerateManifest="false"
+    GenerateDebugInformation="true"
+    SubSystem="2"
+    OptimizeReferences="2"
+    EnableCOMDATFolding="2"
+    EntryPointSymbol="DllMain"
+    RandomizedBaseAddress="1"
+    FixedBaseAddress="1"
+    DataExecutionPrevention="1"
+  />
+</VisualStudioPropertySheet>

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioPropertySheet
+  ProjectType="Visual C++"
+  Version="8.00"
+  Name="asmjit"
+  InheritedPropertySheets="$(SolutionDir)\paths.VS2008.vsprops"
+  >
+  <Tool
+    Name="VCCLCompilerTool"
+    PreprocessorDefinitions="WIN32;_LIB;NDEBUG;ASMJIT_EMBED;ASMJIT_DISABLE_LOGGING"
+    Optimization="1"
+    EnableIntrinsicFunctions="true"
+    AdditionalIncludeDirectories=""
+    RuntimeLibrary="0"
+    EnableFunctionLevelLinking="true"
+    WarningLevel="3"
+    DebugInformationFormat="3"
+    UsePrecompiledHeader="0"
+  />
+</VisualStudioPropertySheet>

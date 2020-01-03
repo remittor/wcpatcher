@@ -1,0 +1,8 @@
+[submodule "extlibs/xxHash"]
+	path = extlibs/xxHash
+	url = https://github.com/Cyan4973/xxHash.git
+	branch = dev
+[submodule "extlibs/asmjit"]
+	path = extlibs/asmjit
+	url = https://github.com/asmjit/asmjit.git
+	branch = oldstable

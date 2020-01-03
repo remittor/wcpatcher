@@ -1,0 +1,5 @@
+[plugininstall]
+description=WCPatcher for TotalCmd (archives browsing accelerator)
+type=wdx
+file=wcpatcher.wdx
+defaultdir=wcpatcher

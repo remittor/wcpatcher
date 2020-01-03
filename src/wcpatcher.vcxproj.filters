@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="bst">
+      <UniqueIdentifier>{e9cf9d97-57de-491e-b6cb-2bf3fb63b263}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="WCP">
+      <UniqueIdentifier>{839781a5-38b2-471b-9136-6b2b99474c66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExtLibs">
+      <UniqueIdentifier>{532a9edd-2e11-438e-a746-be09ffcca6ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExtLibs\xxHash">
+      <UniqueIdentifier>{9e8f1b4d-aaa9-459c-aa77-91f480e0e858}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bst\bst.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\config.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\core.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\list.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\memory.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\srw_lock.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="bst\string.hpp">
+      <Filter>bst</Filter>
+    </ClInclude>
+    <ClInclude Include="log.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_cfg.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_filecache.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_filetree.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_hook.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_intdata.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_memory.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_plugin.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_simplemm.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wcp_version.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="wdx_api.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="winntapi.h">
+      <Filter>WCP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extlibs\xxHash\xxh3.h">
+      <Filter>ExtLibs\xxHash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\extlibs\xxHash\xxhash.h">
+      <Filter>ExtLibs\xxHash</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bst\srw_lock.cpp">
+      <Filter>bst</Filter>
+    </ClCompile>
+    <ClCompile Include="log.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_cfg.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_filecache.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_filetree.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_hook.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_memory.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="wcp_plugin.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="winntapi.cpp">
+      <Filter>WCP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\extlibs\xxHash\xxhash.c">
+      <Filter>ExtLibs\xxHash</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="verinfo.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
