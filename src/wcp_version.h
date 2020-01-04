@@ -1,7 +1,7 @@
 #pragma once
 
 #define WCP_VER_MAJOR     0
-#define WCP_VER_MINOR     4
+#define WCP_VER_MINOR     5
 
 #define WCP_VER_GET_STR(num)  WCP_VER_GET_STR2(num)
 #define WCP_VER_GET_STR2(num) #num
