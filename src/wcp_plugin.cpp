@@ -150,7 +150,9 @@ int plugin::create_hook(func_hook * fh, FuncPreHook func_addr, FuncPostHook post
   if (!fh)
     return -79;
   fh->set_pre_func(func_addr);
-  fh->set_post_func(post_hook);
+  if (post_hook)
+    fh->set_post_func(post_hook);
+
   hr = fh->create_trampoline();
   FIN_IF(hr, -10000 - hr);
 
@@ -274,6 +276,14 @@ int plugin::patch_internal()
   MEMORY_BASIC_INFORMATION mbi = {0};
   DWORD dwOldProt;
   BOOL xprot = FALSE;
+#ifdef _WIN64
+  bool const win64 = true;
+#else
+  bool const win64 = false;
+#endif
+  SIZE_T faddr;
+  SIZE_T faddr32;
+  SIZE_T faddr64;
 
   if (m_patched)
     return 0;
@@ -301,13 +311,10 @@ int plugin::patch_internal()
 
   SIZE_T g_WcxItemList;
   switch (m_exever.dw) {
-#ifdef _WIN64
-    case 0x09020201: g_WcxItemList = 0xC39440; break;
-#else
-    case 0x09020201: g_WcxItemList = 0x799BBC; break;
-#endif
-    default: g_WcxItemList = 0;
+    case 0x09020201: faddr32 = 0x799BBC; faddr64 = 0xC39440; break;
+    default: faddr64 = faddr32 = 0;
   };
+  g_WcxItemList = win64 ? faddr64 : faddr32;
   FIN_IF(!g_WcxItemList, -23);
   hr = m_fcache.init(m_cfg, (LPCVOID)g_WcxItemList);
   FIN_IF(hr, -24);
@@ -323,7 +330,6 @@ int plugin::patch_internal()
 
   int arg_reg_num;
   int arg_stk_num;
-  SIZE_T faddr;
   func_hook * fh = NULL;
 
   {
@@ -335,13 +341,10 @@ int plugin::patch_internal()
     arg_stk_num = 5;
 #endif
     switch (m_exever.dw) {      /* search string aUc2Dir = ">>> UC2 (DIR) <<<" */
-#ifdef _WIN64
-      case 0x09020201: faddr = 0x51D840; break;
-#else
-      case 0x09020201: faddr = 0x67A600; break;
-#endif
-      default: faddr = 0;
-    };    
+      case 0x09020201: faddr32 = 0x67A600; faddr64 = 0x51D840; break;
+      default: faddr64 = faddr32 = 0;
+    };
+    faddr = win64 ? faddr64 : faddr32;
     fh = add_func_hook("WcxProcessor", arg_reg_num, arg_stk_num, faddr);
     //set_post_func(fh, WcxProcessor_post);  // TEST
     hr = create_hook(fh, WcxProcessor);
@@ -351,13 +354,10 @@ int plugin::patch_internal()
     arg_reg_num = 1;
     arg_stk_num = 0;
     switch (m_exever.dw) {     /* call TObject@Free(eax) / call TObject@Free(rcx) */
-#ifdef _WIN64
-      case 0x09020201: faddr = 0x51F4E0; break;
-#else
-      case 0x09020201: faddr = 0x67B886; break;
-#endif
-      default: faddr = 0;
+      case 0x09020201: faddr32 = 0x67B886; faddr64 = 0x51F4E0; break;
+      default: faddr64 = faddr32 = 0;
     };
+    faddr = win64 ? faddr64 : faddr32;
     fh = add_func_hook("WcxProcessor_loop_end", arg_reg_num, arg_stk_num, faddr, func_hook::ptCalleeAddr);
     hr = create_hook(fh, WcxProcessor_loop_end);
     FIN_IF(hr, -41);
@@ -371,13 +371,10 @@ int plugin::patch_internal()
     arg_stk_num = 9;
 #endif
     switch (m_exever.dw) {    /* call TcCreateFileInfo(ptr_aDoubleDot) */
-#ifdef _WIN64
-      case 0x09020201: faddr = 0x51EBFF; break;
-#else
-      case 0x09020201: faddr = 0x67B33C; break;
-#endif
-      default: faddr = 0;
+      case 0x09020201: faddr32 = 0x67B33C; faddr64 = 0x51EBFF; break;
+      default: faddr64 = faddr32 = 0;
     };
+    faddr = win64 ? faddr64 : faddr32;
     fh = add_func_hook("TcCreateFileInfo_dd", arg_reg_num, arg_stk_num, faddr, func_hook::ptCalleeAddr);
     hr = create_hook(fh, TcCreateFileInfo_dd);
     FIN_IF(hr, -51);
@@ -386,13 +383,10 @@ int plugin::patch_internal()
     arg_reg_num = 2;
     arg_stk_num = 0;
     switch (m_exever.dw) {
-#ifdef _WIN64
-  case 0x09020201: faddr = 0x41F590; break;
-#else
-  case 0x09020201: faddr = 0x75AD60; break;
-#endif
-  default: faddr = 0;
+      case 0x09020201: faddr32 = 0x75AD60; faddr64 = 0x41F590; break;
+      default: faddr64 = faddr32 = 0;
     };
+    faddr = win64 ? faddr64 : faddr32;
     fh = add_func_hook("tc_wcsicmp", arg_reg_num, arg_stk_num, faddr);
     set_main_func(fh, tc_wcsicmp);
     hr = create_hook(fh, NULL);
