@@ -109,7 +109,6 @@ private:
   int a_restore_zsp();
   int a_init_trampoline();
   int a_replace_ret_addr();
-  int a_call_main_hook();
   int a_call_hook(LPVOID func_addr);
   int a_call_pre_hook();
   int a_insert_prolog_and_jmp();

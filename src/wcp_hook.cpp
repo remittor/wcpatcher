@@ -432,7 +432,9 @@ int func_hook::delete_patch()
     *(PINT32)p = m_fn_rel_addr;
   }
   LOGi("%s: delete patch for %s", __func__, m_name);
+  hr = 0;
 fin:
+  LOGe_IF(hr, "%s: ERROR = %d", __func__, hr);
   return 0;
 }
 
