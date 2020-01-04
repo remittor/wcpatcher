@@ -223,7 +223,7 @@ filecachelist::filecachelist() noexcept
 {
   m_inicfg = NULL;
   m_WcxItemList = NULL;
-  memset(&m_list, 0, sizeof(filecachelist));
+  memset(m_list, 0, sizeof(m_list));
   m_current_index = -1;
 }
 
