@@ -28,20 +28,19 @@ int WINAPI ContentGetValue(LPCSTR FileName, int FieldIndex, int UnitIndex, LPVOI
 
 // ==================================================================================================
 
-extern "C" BOOL WINAPI _CRT_INIT(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved);
+extern "C" BOOL WINAPI _DllMainCRTStartup(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved);
 
-BOOL __declspec(nothrow) WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
+extern "C" BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
   if (fdwReason == DLL_PROCESS_ATTACH) {
+    volatile LPVOID ep = _DllMainCRTStartup;
     DWORD tid = GetCurrentThreadId();
     g_hInstance = hInstDLL;
-    _CRT_INIT(hInstDLL, fdwReason, lpReserved);
     LOGn("WCP Plugin Loaded ===================== Thread ID = 0x%04X ========", tid);
     g_wcp.init(hInstDLL, tid);
   }
   if (fdwReason == DLL_PROCESS_DETACH) {
     LOGn("WCP Plugin unload! ------------------------------------------------");
-    _CRT_INIT(hInstDLL, fdwReason, lpReserved);
   }
   return TRUE;
 }
