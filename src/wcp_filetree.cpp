@@ -113,7 +113,6 @@ static SIZE_T get_hash(LPCWSTR name, size_t name_len, bool lower_case) noexcept
     if (nLen != (int)name_len)
       return 0;
     name = (LPCWSTR)namelwr;
-    name_len = nLen;
   }
   return (SIZE_T)XXH3_64bits(name, name_len);
 }
@@ -178,6 +177,7 @@ int TTreeElem::set_name(LPCWSTR elem_name, size_t enlen) noexcept
   } else {
     name_len = (UINT16)enlen;
     memcpy(name, elem_name, enlen * sizeof(WCHAR));
+    name[enlen] = 0;
     name_hash = get_hash(elem_name, enlen, is_name_case_sens() ? false : true);
   }
   return 0;
@@ -243,7 +243,8 @@ int FileTree::add_file_item(PFileItem fi) noexcept
   size_t nlen = 0;
   LPCWSTR name = fi->name;
   for (LPCWSTR fn = name; /*nothing*/; fn++) {
-    if (*fn == L'\\') {
+    WCHAR const symbol = *fn;
+    if (symbol == L'\\') {
       if (nlen) {
         elem = add_dir(elem, name, nlen);
         FIN_IF(!elem, -10);
@@ -252,7 +253,7 @@ int FileTree::add_file_item(PFileItem fi) noexcept
       nlen = 0;
       continue;   /* skip backslash */
     }
-    if (*fn == 0) {
+    if (symbol == 0) {
       if (nlen) {
         if (fi->attr & tfa::DIRECTORY) {
           elem = add_dir(elem, name, nlen);
@@ -283,12 +284,13 @@ TTreeElem * FileTree::find_directory(LPCWSTR curdir) noexcept
     size_t nlen = 0;
     LPCWSTR name = curdir;
     for (LPCWSTR fn = curdir; /*nothing*/; fn++) {
-      if (*fn == L'\\' || *fn == 0) {
+      WCHAR const symbol = *fn;
+      if (symbol == L'\\' || symbol == 0) {
         if (nlen) {
           elem = find_subdir(elem, name, nlen);
           FIN_IF(!elem, -10);          
         }
-        if (*fn == 0)
+        if (symbol == 0)
           break;
         name = fn + 1;
         nlen = 0;
