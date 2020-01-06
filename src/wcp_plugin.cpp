@@ -12,6 +12,7 @@ plugin::plugin()
   m_inited = false;
   m_patched = false;
   m_exever.dw = 0;
+  m_exedate[0] = 0;
 }
 
 plugin::~plugin()
@@ -68,22 +69,30 @@ static size_t StrLenEOS(const char * s)
   return StrLenEx(s, '#EOS');
 }
 
-PBYTE plugin::find_pattern(PBYTE beg, PBYTE end, LPVOID pattern, size_t size)
+LPCVOID plugin::find_pattern(LPCVOID lpBegin, LPCVOID lpEnd, LPCVOID pattern, size_t size)
 {
-  if (size >= 4 && beg + size + 4 < end) {
+  PBYTE beg = (PBYTE)lpBegin;
+  PBYTE end = (PBYTE)lpEnd;
+  if (size >= 3 && beg + size + 4 < end) {
     end -= (size + 4);
-    DWORD const prefix0 = *(PDWORD)pattern;
+    DWORD const prefix0 = (size >= 4) ? *(PDWORD)pattern : (*(PDWORD)pattern) & 0xFFFFFF;
     DWORD const prefix4 = (size >= 8) ? *(PDWORD)((PBYTE)pattern + 4) : 0;
     DWORD const prefix8 = (size >= 12) ? *(PDWORD)((PBYTE)pattern + 8) : 0;
     for (PBYTE p = beg; p <= end; p++) {
-      if (*(PDWORD)p != prefix0)
+      DWORD const dw = *(PDWORD)p;
+      if (size == 3) {
+        if ((dw & 0xFFFFFF) == prefix0)
+          return (LPCVOID)p;
+        continue;
+      }
+      if (dw != prefix0)
         continue;
       if (size >= 8 && *(PDWORD)(p + 4) != prefix4)
         continue;
       if (size >= 12 && *(PDWORD)(p + 8) != prefix8)
         continue;
       if (memcmp(p, pattern, size) == 0)
-        return p;
+        return (LPCVOID)p;
     }
   }
   return NULL;
@@ -138,7 +147,7 @@ int plugin::load_image_cfg()
   DWORD dw = GetFileAttributesW(inifn.c_str());
   FIN_IF(dw == INVALID_FILE_ATTRIBUTES, -12);
   FIN_IF(m_exever.dw == 0, -13);
-  sec.assign_fmt(L"%d.%d.%d.%d", m_exever.major, m_exever.minor, m_exever.build, m_exever.revision);
+  sec.assign_fmt(L"%S", m_exedate);
 #ifdef _WIN64
   sec.append(L"-x64");
 #endif
@@ -437,9 +446,64 @@ fin:
   return hr;
 }
 
-int plugin::get_exe_ver(modver * ver)
+// ==============================================================================================
+
+int plugin::find_exe_date(LPCVOID beg, LPCVOID end)
 {
   int hr = -1;
+  LPCVOID pos = beg;
+  const size_t max_offset = 60;
+  LPCSTR pdate = NULL;
+
+  char ver2[16];
+  sprintf(ver2, "%d.%d", m_exever.major, m_exever.minor);
+  char ver3[16];
+  sprintf(ver3, "%d.%d%d", m_exever.major, m_exever.minor, m_exever.build);
+
+  while (1) {
+    pos = find_pattern(pos, end, " (20", 4);     /* search date (YYYY-MM-DD) */
+    FIN_IF(!pos, -5);
+    pdate = (LPCSTR)pos;
+    pos = (LPCVOID)((PBYTE)pos + 4);
+    size_t dlen = strlen(pdate);
+    if (dlen < 12)
+      continue;
+    LPCSTR pos2 = pdate;
+    if ((SIZE_T)pdate > (SIZE_T)beg + max_offset) {
+      pos2 = pdate - max_offset;
+    }
+    LPCSTR end2 = pdate + dlen + max_offset;
+    if (end2 > end) {
+      end2 = (LPCSTR)end;
+    }
+    LPCVOID v = find_pattern(pos2, end2, ver3, strlen(ver3));
+    if (!v) {
+      v = find_pattern(pos2, end2, ver2, strlen(ver2));
+    }
+    if (v)
+      break;
+  }
+  if (pdate[0] == 0x20)
+    pdate++;
+  if (pdate[0] == '(')
+    pdate++;
+  FIN_IF(strlen(pdate) >= sizeof(m_exedate) - 1, -11);
+  strcpy(m_exedate, pdate);
+  LPSTR k = strchr(m_exedate, ')');
+  if (k)
+    *k = 0;
+  hr = 0;
+
+fin:
+  return hr;
+}
+
+int plugin::get_exe_ver()
+{
+  int hr = -1;
+
+  m_exever.dw = 0;
+  m_exedate[0] = 0;
 
   VS_FIXEDFILEINFO * vffi = nt::GetModuleFixedFileInfo(NULL);
   FIN_IF(!vffi, -2);
@@ -452,13 +516,37 @@ int plugin::get_exe_ver(modver * ver)
   m_exever.build = (BYTE)HIWORD(vffi->dwFileVersionLS);
   m_exever.revision = (BYTE)LOWORD(vffi->dwFileVersionLS);
   LOGn("TotalCmd version = %d.%d.%d.%d", m_exever.major, m_exever.minor, m_exever.build, m_exever.revision);
-  if (ver)
-    *ver = m_exever;
-  hr = 0;
+
+#ifdef _WIN64
+  MEMORY_BASIC_INFORMATION mbi;
+  PBYTE image_base = (PBYTE)GetModuleHandleW(NULL);
+  PBYTE addr = image_base;
+  while (1) {
+    SIZE_T dwSize = VirtualQuery(addr, &mbi, sizeof(mbi));
+    FIN_IF(!dwSize, -4);
+    FIN_IF(mbi.RegionSize < 0x1000, -5);  /* PAGE_SIZE */
+    addr += mbi.RegionSize;
+    FIN_IF(mbi.AllocationBase != (PVOID)image_base, -6);
+    if (mbi.State & MEM_FREE) continue;
+    if ((mbi.State & MEM_COMMIT) == 0) continue;
+    if ((mbi.Type & SEC_IMAGE) == 0) continue;
+    if (mbi.Protect & PAGE_NOACCESS) continue;
+    if (mbi.Protect & PAGE_GUARD) continue;
+    if (mbi.Protect & (PAGE_WRITECOPY | PAGE_READWRITE | PAGE_EXEC_MASK)) {
+      hr = find_exe_date(mbi.BaseAddress, (PBYTE)mbi.BaseAddress + mbi.RegionSize - 16);
+      FIN_IF(hr == 0, 0);
+    }
+  }
+#else
+  hr = find_exe_date(m_codesec.base + 128, m_codesec.base + m_codesec.size - 256);
+  FIN_IF(hr == 0, 0);
+#endif
+  hr = -19;
 
 fin:
+  LOGn_IF(hr == 0, "TotalCmd date = \"%s\"", m_exedate);
+  LOGe_IF(hr, "%s: ERROR = %d", __func__, hr);
   return hr;
 }
-
 
 } /* namespace */

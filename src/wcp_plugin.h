@@ -56,9 +56,8 @@ public:
   int load_image_cfg();
   int patch();
   
-  int get_exe_ver(modver * ver = NULL);
   UINT get_main_thread_id() { return m_main_thread_id; }
-  PBYTE find_pattern(PBYTE beg, PBYTE end, LPVOID pattern, size_t size);
+  LPCVOID find_pattern(LPCVOID lpBegin, LPCVOID lpEnd, LPCVOID pattern, size_t size);
   PBYTE find_func_enter_backward(PBYTE beg, PBYTE codebase);
 
   func_hook * add_func_hook(img_obj & obj, int arg_reg_num, int arg_stk_num, func_hook::patch_type type = func_hook::ptFuncProlog);
@@ -67,6 +66,8 @@ public:
 private:
   int patch_internal();
   int load_img_obj(img_obj & obj, LPCSTR name, LPCWSTR sec, LPCWSTR ini);
+  int get_exe_ver();
+  int find_exe_date(LPCVOID beg, LPCVOID end);
 
   DWORD         m_main_thread_id;
   HMODULE       m_module;
@@ -83,6 +84,7 @@ private:
 
   tramp_mm      m_trampolines;
   modver        m_exever;
+  char          m_exedate[16];
   bst::list<func_hook> m_fhlist;
   filecachelist m_fcache;
 };
