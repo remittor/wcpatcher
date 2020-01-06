@@ -11,6 +11,7 @@ plugin::plugin()
   m_main_thread_id = 0;
   m_inited = false;
   m_patched = false;
+  m_exever.dw = 0;
 }
 
 plugin::~plugin()
@@ -102,7 +103,65 @@ PBYTE plugin::find_func_enter_backward(PBYTE beg, PBYTE codebase)
 
 // ============================================================================================
 
-func_hook * plugin::add_func_hook(LPCSTR name, int arg_reg_num, int arg_stk_num, SIZE_T addr, func_hook::patch_type type)
+int plugin::load_img_obj(img_obj & obj, LPCSTR name, LPCWSTR sec, LPCWSTR ini)
+{
+  int hr = -1;
+  bst::filename wname;
+  bst::filename val;
+  INT64 addr;
+
+  strcpy(obj.name, name);
+  wname.assign_fmt(L"%S", name);
+  int vlen = (int)GetPrivateProfileStringW(sec, wname.c_str(), NULL, val.data(), (DWORD)val.capacity(), ini);
+  FIN_IF(vlen <= 0, -2);
+  BOOL x = StrToInt64ExW(val.c_str(), STIF_SUPPORT_HEX, &addr);
+  FIN_IF(!x, -3);
+
+  obj.addr = (SIZE_T)addr;
+  hr = 0;
+
+fin:
+  return hr;
+}
+
+int plugin::load_image_cfg()
+{
+  int hr = -1;
+  bst::filepath inifn;  /* ini filename */
+  bst::filename sec;    /* section name */
+
+  memset(&m_img, 0, sizeof(m_img));
+  inifn.assign(m_inicfg.get_mod_path());
+  FIN_IF(inifn.length() <= 3, -2);
+  inifn.append(img_cfg_filename);
+  FIN_IF(inifn.has_error(), -3);
+  DWORD dw = GetFileAttributesW(inifn.c_str());
+  FIN_IF(dw == INVALID_FILE_ATTRIBUTES, -12);
+  FIN_IF(m_exever.dw == 0, -13);
+  sec.assign_fmt(L"%d.%d.%d.%d", m_exever.major, m_exever.minor, m_exever.build, m_exever.revision);
+#ifdef _WIN64
+  sec.append(L"-x64");
+#endif
+  hr = load_img_obj(m_img.g_WcxItemList, "g_WcxItemList", sec.c_str(), inifn.c_str());
+  FIN_IF(hr, -41);
+  hr = load_img_obj(m_img.WcxProcessor, "WcxProcessor", sec.c_str(), inifn.c_str());
+  FIN_IF(hr, -42);
+  hr = load_img_obj(m_img.WcxProcessor_loop_end, "WcxProcessor_loop_end", sec.c_str(), inifn.c_str());
+  FIN_IF(hr, -43);
+  hr = load_img_obj(m_img.TcCreateFileInfo_dd, "TcCreateFileInfo_dd", sec.c_str(), inifn.c_str());
+  FIN_IF(hr, -44);
+  load_img_obj(m_img.tc_wcsicmp, "tc_wcsicmp", sec.c_str(), inifn.c_str());
+
+  hr = 0;
+
+fin:
+  LOGe_IF(hr, "%s: ERROR = %d", __func__, hr);
+  return hr;
+}
+
+// ============================================================================================
+
+func_hook * plugin::add_func_hook(img_obj & obj, int arg_reg_num, int arg_stk_num, func_hook::patch_type type)
 {
   int hr = 0;
 
@@ -115,7 +174,7 @@ func_hook * plugin::add_func_hook(LPCSTR name, int arg_reg_num, int arg_stk_num,
   FIN_IF(!taddr, -101);
   fh->set_trampoline_memory(taddr, tcap);
 
-  hr = fh->init(name, (LPCVOID)addr, arg_reg_num, arg_stk_num);
+  hr = fh->init(obj.name, (LPCVOID)obj.addr, arg_reg_num, arg_stk_num);
   FIN_IF(hr, -102);
 
   bool x = m_fhlist.add(fh);
@@ -126,7 +185,7 @@ fin:
   if (hr) {
     if (fh)
       delete fh;
-    LOGe("%s: ERROR = %d (%s)", __func__, hr, name);
+    LOGe("%s: ERROR = %d (%s)", __func__, hr, obj.name);
   }
   return hr ? NULL : fh;
 }
@@ -276,14 +335,6 @@ int plugin::patch_internal()
   MEMORY_BASIC_INFORMATION mbi = {0};
   DWORD dwOldProt;
   BOOL xprot = FALSE;
-#ifdef _WIN64
-  bool const win64 = true;
-#else
-  bool const win64 = false;
-#endif
-  SIZE_T faddr;
-  SIZE_T faddr32;
-  SIZE_T faddr64;
 
   if (m_patched)
     return 0;
@@ -309,16 +360,6 @@ int plugin::patch_internal()
   hr = get_exe_ver();
   FIN_IF(hr, -22);
 
-  SIZE_T g_WcxItemList;
-  switch (m_exever.dw) {
-    case 0x09020201: faddr32 = 0x799BBC; faddr64 = 0xC39440; break;
-    default: faddr64 = faddr32 = 0;
-  };
-  g_WcxItemList = win64 ? faddr64 : faddr32;
-  FIN_IF(!g_WcxItemList, -23);
-  hr = m_fcache.init(m_cfg, (LPCVOID)g_WcxItemList);
-  FIN_IF(hr, -24);
-
   //LOGd("sizeof(TFileItem) = 0x%02X", sizeof(TFileItem));
   //LOGd("TFileItem.szHI    = 0x%02X", FIELD_OFFSET(TFileItem, sizeHI));
   //LOGd("TFileItem.ptr1    = 0x%02X", FIELD_OFFSET(TFileItem, ptr1));
@@ -327,6 +368,12 @@ int plugin::patch_internal()
   //LOGd("TFileItem.tcAttr  = 0x%02X", FIELD_OFFSET(TFileItem, tcAttr));
   //LOGd("TFileItem.ptr3    = 0x%02X", FIELD_OFFSET(TFileItem, ptr3));
   //LOGd("TFileItem.ptr4    = 0x%02X", FIELD_OFFSET(TFileItem, ptr4));
+
+  hr = load_image_cfg();
+  FIN_IF(hr, -23);
+
+  hr = m_fcache.init(m_cfg, (LPCVOID)m_img.g_WcxItemList.addr);
+  FIN_IF(hr, -24);
 
   int arg_reg_num;
   int arg_stk_num;
@@ -340,12 +387,8 @@ int plugin::patch_internal()
     arg_reg_num = 6;
     arg_stk_num = 5;
 #endif
-    switch (m_exever.dw) {      /* search string aUc2Dir = ">>> UC2 (DIR) <<<" */
-      case 0x09020201: faddr32 = 0x67A600; faddr64 = 0x51D840; break;
-      default: faddr64 = faddr32 = 0;
-    };
-    faddr = win64 ? faddr64 : faddr32;
-    fh = add_func_hook("WcxProcessor", arg_reg_num, arg_stk_num, faddr);
+    /* WcxProcessor: search string aUc2Dir = ">>> UC2 (DIR) <<<" */
+    fh = add_func_hook(m_img.WcxProcessor, arg_reg_num, arg_stk_num);
     //set_post_func(fh, WcxProcessor_post);  // TEST
     hr = create_hook(fh, WcxProcessor);
     FIN_IF(hr, -31);
@@ -353,12 +396,8 @@ int plugin::patch_internal()
   {
     arg_reg_num = 1;
     arg_stk_num = 0;
-    switch (m_exever.dw) {     /* call TObject@Free(eax) / call TObject@Free(rcx) */
-      case 0x09020201: faddr32 = 0x67B886; faddr64 = 0x51F4E0; break;
-      default: faddr64 = faddr32 = 0;
-    };
-    faddr = win64 ? faddr64 : faddr32;
-    fh = add_func_hook("WcxProcessor_loop_end", arg_reg_num, arg_stk_num, faddr, func_hook::ptCalleeAddr);
+    /* WcxProcessor_loop_end: call TObject@Free(eax) / call TObject@Free(rcx) */
+    fh = add_func_hook(m_img.WcxProcessor_loop_end, arg_reg_num, arg_stk_num, func_hook::ptCalleeAddr);
     hr = create_hook(fh, WcxProcessor_loop_end);
     FIN_IF(hr, -41);
   }
@@ -370,24 +409,15 @@ int plugin::patch_internal()
     arg_reg_num = 3;
     arg_stk_num = 9;
 #endif
-    switch (m_exever.dw) {    /* call TcCreateFileInfo(ptr_aDoubleDot) */
-      case 0x09020201: faddr32 = 0x67B33C; faddr64 = 0x51EBFF; break;
-      default: faddr64 = faddr32 = 0;
-    };
-    faddr = win64 ? faddr64 : faddr32;
-    fh = add_func_hook("TcCreateFileInfo_dd", arg_reg_num, arg_stk_num, faddr, func_hook::ptCalleeAddr);
+    /* WcxProcessor: call TcCreateFileInfo(ptr_aDoubleDot) */
+    fh = add_func_hook(m_img.TcCreateFileInfo_dd, arg_reg_num, arg_stk_num, func_hook::ptCalleeAddr);
     hr = create_hook(fh, TcCreateFileInfo_dd);
     FIN_IF(hr, -51);
   }
-  if (m_cfg.get_patch_wcsicmp()) {
+  if (m_cfg.get_patch_wcsicmp() && m_img.tc_wcsicmp.addr) {
     arg_reg_num = 2;
     arg_stk_num = 0;
-    switch (m_exever.dw) {
-      case 0x09020201: faddr32 = 0x75AD60; faddr64 = 0x41F590; break;
-      default: faddr64 = faddr32 = 0;
-    };
-    faddr = win64 ? faddr64 : faddr32;
-    fh = add_func_hook("tc_wcsicmp", arg_reg_num, arg_stk_num, faddr);
+    fh = add_func_hook(m_img.tc_wcsicmp, arg_reg_num, arg_stk_num);
     set_main_func(fh, tc_wcsicmp);
     hr = create_hook(fh, NULL);
     FIN_IF(hr, -61);

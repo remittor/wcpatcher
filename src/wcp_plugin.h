@@ -21,10 +21,24 @@ struct modver {
       BYTE  minor;
       BYTE  major;
     };
-  };  
+  };
 };
 #pragma pack(pop)
 
+static const wchar_t  img_cfg_filename[] = L"imgcfg.ini";
+
+struct img_obj {
+  CHAR    name[48];
+  SIZE_T  addr;
+};
+
+struct img_obj_list {
+  img_obj g_WcxItemList;
+  img_obj WcxProcessor;
+  img_obj WcxProcessor_loop_end;
+  img_obj TcCreateFileInfo_dd;
+  img_obj tc_wcsicmp;
+};
 
 enum direction {
   dirForward  = 0,
@@ -39,6 +53,7 @@ public:
 
   int init(HMODULE lib_addr, DWORD thread_id) noexcept;
   int destroy();
+  int load_image_cfg();
   int patch();
   
   int get_exe_ver(modver * ver = NULL);
@@ -46,19 +61,19 @@ public:
   PBYTE find_pattern(PBYTE beg, PBYTE end, LPVOID pattern, size_t size);
   PBYTE find_func_enter_backward(PBYTE beg, PBYTE codebase);
 
-  func_hook * add_func_hook(LPCSTR name, int arg_reg_num, int arg_stk_num, SIZE_T addr,
-                            func_hook::patch_type type = func_hook::ptFuncProlog);
-
+  func_hook * add_func_hook(img_obj & obj, int arg_reg_num, int arg_stk_num, func_hook::patch_type type = func_hook::ptFuncProlog);
   int create_hook(func_hook * fh, FuncPreHook func_addr, FuncPostHook post_hook = NULL);
 
 private:
   int patch_internal();
+  int load_img_obj(img_obj & obj, LPCSTR name, LPCWSTR sec, LPCWSTR ini);
 
   DWORD         m_main_thread_id;
   HMODULE       m_module;
   bool          m_inited;
   wcp::cfg      m_cfg;
   wcp::inicfg   m_inicfg;
+  img_obj_list  m_img;
 
   bool          m_patched;
   struct {

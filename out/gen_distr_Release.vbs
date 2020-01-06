@@ -26,6 +26,8 @@ objApp.NameSpace(target).CopyHere (wcx_file_x86)
 wscript.sleep 150
 objApp.NameSpace(target).CopyHere (scriptdir & "\wcpatcher.ini")
 wscript.sleep 100
+objApp.NameSpace(target).CopyHere (scriptdir & "\imgcfg.ini")
+wscript.sleep 100
 objApp.NameSpace(target).CopyHere (scriptdir & "\install_EN.txt")
 wscript.sleep 100
 objApp.NameSpace(target).CopyHere (scriptdir & "\install_RU.txt")

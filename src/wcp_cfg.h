@@ -64,6 +64,7 @@ public:
   int update() noexcept { return load_from_ini(false); }
 
   int save_to_ini() noexcept;
+  LPCWSTR get_mod_path() { return m_mod_path.c_str(); }
 
 protected:
   int get_param_int(LPCWSTR param_name, int def_value) noexcept;
