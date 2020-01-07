@@ -5,7 +5,7 @@ Next, in order to load WCP-plugin at Total Commander start, you should create th
 3) Press "Define…" button. 
 4) In the "Define selection" dialog move to "Plugins" tab.
 5) Select in "Plugin" dropdown list "wcpatcher".
-6) Select in "Property" dropdown list "wcpatcher".
+6) Field "Property" can contain any value (even empty).
 7) Select in "OP" dropdown list "=" and set in following field any integer, for example "1". 
 8) Press "Save" button, give the template some name, for example "WCP".
 9) Next, repeatedly press OK button in all dialogs until options dialog will be closed.
