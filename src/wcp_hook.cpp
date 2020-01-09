@@ -24,6 +24,10 @@ int fnprolog::init(LPCVOID address)
     p += 4;
     FIN(0);
   }
+  if (p[0] >= 0x48 && p[0] <= 0x49 && p[1] >= 0xB8 && p[1] <= 0xBF) {   /* mov  r64, imm64 */
+    p += 2 + 8;
+    FIN(0);
+  }
 #else
   DWORD header = *(PDWORD)p & 0xFFFFFF;
   FIN_IF(header != '\x55\x8B\xEC', -2);  /* push  ebp ; mov  ebp, esp */

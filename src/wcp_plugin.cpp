@@ -463,10 +463,14 @@ int plugin::find_exe_date(LPCVOID beg, LPCVOID end)
   while (1) {
     pos = find_pattern(pos, end, " (20", 4);     /* search date (YYYY-MM-DD) */
     FIN_IF(!pos, -5);
-    pdate = (LPCSTR)pos;
+    pdate = (LPCSTR)pos + 1;
     pos = (LPCVOID)((PBYTE)pos + 4);
+    if (pdate[3] != '1' && pdate[3] != '2')
+      continue;
+    if (pdate[5] != '-' && pdate[8] != '-')
+      continue;
     size_t dlen = strlen(pdate);
-    if (dlen < 12)
+    if (dlen < 11)
       continue;
     LPCSTR pos2 = pdate;
     if ((SIZE_T)pdate > (SIZE_T)beg + max_offset) {
