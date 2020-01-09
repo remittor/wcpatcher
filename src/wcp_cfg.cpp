@@ -75,7 +75,7 @@ int inicfg::load_from_ini(bool forced) noexcept
   }
   val = get_param_int(L"ActivateWhenExceed", -1);
   if (val >= 0) {
-    config.set_act_limit(val ? true : false);
+    config.set_act_limit(val);
     LOGd("%s: act_limit = %d ", __func__, val);
   }
   val = get_param_int(L"CaseSensitive", -1);
