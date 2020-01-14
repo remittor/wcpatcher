@@ -131,7 +131,7 @@ int filecache::TcCreateFileInfo(char mode, LPCWSTR fileName, BYTE fileAttr, INT6
       //SYSTEMTIME st;
       //FileTimeToSystemTime((FILETIME *)&item->time, &st);
       //WLOGd(L"%S:     %04d-%02d-%02d %02d:%02d:%02d", __func__, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-      m_ftree.add_file_item(item);
+      m_ftree.add_file_item(item->name, item, NULL);
     }
     m_item_count = item_cnt;
     double dms = m_dir_gen.get_diff_msec();

@@ -123,14 +123,16 @@ public:
   void set_case_sensitive(bool is_case_sensitive) noexcept;
   void set_internal_mm(bool enabled) { m_use_mm = enabled; }
 
-  int add_file_item(PFileItem fitem) noexcept;
-  TTreeElem * find_directory(LPCWSTR curdir) noexcept;
+  int add_file_item(LPCWSTR fullname, PFileItem fitem, OUT PTreeElem * lpElem) noexcept;
+  TTreeElem * find_directory(LPCWSTR curdir, WCHAR delimiter = L'\\') noexcept;
   bool find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept;
   bool find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth = 0) noexcept;
 
   int get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
 
   size_t get_num_elem() { return m_elem_count; }
+  size_t get_capacity() { return m_capacity; }
+  bool is_overfill() { return m_elem_count == SIZE_MAX - 1; }
 
 private:
   void reset_root_elem() noexcept;
@@ -152,6 +154,7 @@ private:
   bool        m_case_sensitive;
   TTreeElem   m_root;
   size_t      m_elem_count;
+  size_t      m_capacity;
   bool        m_use_mm;    /* use simple memory manager */
   simplemm    m_mm;
 };
@@ -203,7 +206,6 @@ private:
   TDirEnum    m_path[max_dir_depth + 1];
   size_t      m_max_depth;
   size_t      m_cur_depth;
-  
 };
 
 

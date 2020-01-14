@@ -77,6 +77,7 @@ void FileTree::clear() noexcept
 void FileTree::reset_root_elem() noexcept
 {
   m_elem_count = 0;
+  m_capacity = 0;
   memset(&m_root, 0, sizeof(m_root));
   m_root.flags = EFLAG_DIRECTORY;
   if (m_case_sensitive)
@@ -201,6 +202,7 @@ TTreeElem * FileTree::create_elem(PTreeElem owner, LPCWSTR name, size_t name_len
   elem->set_name(name, name_len);
   owner->push_subelem(elem);
   m_elem_count++;
+  m_capacity += elem_size;
   return elem;
 }
 
@@ -230,18 +232,19 @@ TTreeElem * FileTree::add_file(PTreeElem owner, LPCWSTR name, size_t name_len, P
   return elem;
 }
 
-int FileTree::add_file_item(PFileItem fi) noexcept
+int FileTree::add_file_item(LPCWSTR fullname, PFileItem fi, OUT PTreeElem * lpElem) noexcept
 {
   int hr = -1;
   TTreeElem * elem = &m_root;
 
-  FIN_IF(!fi, 0);
-  FIN_IF(!fi->name, 0);
-  FIN_IF(fi->name[0] == 0, 0);
+  FIN_IF(is_overfill(), -1);
+  FIN_IF(!fi, -2);
+  FIN_IF(!fullname, -2);
+  FIN_IF(fullname[0] == 0, -3);
 
-  //WLOGd(L"%S: '%s'", __func__, fi->name);
+  //WLOGd(L"%S: '%s'", __func__, fullname);
   size_t nlen = 0;
-  LPCWSTR name = fi->name;
+  LPCWSTR name = fullname;
   for (LPCWSTR fn = name; /*nothing*/; fn++) {
     WCHAR const symbol = *fn;
     if (symbol == L'\\') {
@@ -251,19 +254,20 @@ int FileTree::add_file_item(PFileItem fi) noexcept
       }
       name = fn + 1;
       nlen = 0;
-      continue;   /* skip backslash */
+      continue;   /* skip delimiter */
     }
     if (symbol == 0) {
-      if (nlen) {
-        if (fi->attr & tfa::DIRECTORY) {
-          elem = add_dir(elem, name, nlen);
-          FIN_IF(!elem, -21);
-          elem->set_data(fi);
-        } else {
-          elem = add_file(elem, name, nlen, fi);
-          FIN_IF(!elem, -25);
-        }
+      FIN_IF(nlen == 0, -20);
+      if (fi->attr & tfa::DIRECTORY) {
+        elem = add_dir(elem, name, nlen);
+        FIN_IF(!elem, -21);
+        elem->set_data(fi);
+      } else {
+        elem = add_file(elem, name, nlen, fi);
+        FIN_IF(!elem, -25);
       }
+      if (lpElem)
+        *lpElem = elem;
       break;
     }
     nlen++;
@@ -273,19 +277,19 @@ int FileTree::add_file_item(PFileItem fi) noexcept
 fin:
   LOGe_IF(hr, "%s: ERROR = %d", __func__, hr);
   return hr;
-} 
+}
 
-TTreeElem * FileTree::find_directory(LPCWSTR curdir) noexcept
+TTreeElem * FileTree::find_directory(LPCWSTR curdir, WCHAR delimiter) noexcept
 {
   int hr = -1;
   TTreeElem * elem = &m_root;
 
-  if (curdir[0]) {
+  if (curdir && curdir[0]) {
     size_t nlen = 0;
     LPCWSTR name = curdir;
     for (LPCWSTR fn = curdir; /*nothing*/; fn++) {
       WCHAR const symbol = *fn;
-      if (symbol == L'\\' || symbol == 0) {
+      if (symbol == delimiter || symbol == 0) {
         if (nlen) {
           elem = find_subdir(elem, name, nlen);
           FIN_IF(!elem, -10);          
