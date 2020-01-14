@@ -123,6 +123,9 @@ public:
   int add_file_item(PFileItem fitem) noexcept;
   TTreeElem * find_directory(LPCWSTR curdir) noexcept;
   bool find_directory(FileTreeEnum & ftenum, LPCWSTR curdir) noexcept;
+
+  int get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
+
   int get_dir_num_item(const FileTreeEnum & ftenum) noexcept;
   TTreeElem * get_next(FileTreeEnum & ftenum) noexcept;
   size_t get_num_elem() { return m_elem_count; }

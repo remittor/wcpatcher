@@ -314,6 +314,47 @@ bool FileTree::find_directory(FileTreeEnum & ftenum, LPCWSTR curdir) noexcept
   return ftenum.owner ? true : false;
 };
 
+int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
+{
+  int hr = -1;
+  const size_t max_depth = 512;
+  PTreeElem branch[max_depth + 1];
+
+  FIN_IF(!elem, -1);
+  FIN_IF(!path, -1);
+  path[0] = 0;
+  FIN_IF(elem == &m_root, -2);  /* path returned without root name */
+
+  size_t depth = 0;
+  TTreeElem * e = elem;
+  do { 
+    if (e == &m_root)
+      break;
+    FIN_IF(depth == max_depth, -5);
+    branch[depth++] = e;
+  } while (e = e->owner);
+
+  FIN_IF(depth == 0, -6);
+  depth--;
+
+  size_t len = 0;
+  do {
+    TTreeElem * e = branch[depth];
+    const size_t name_len = e->name_len;
+    FIN_IF(len + name_len + 1 >= path_cap, -7);
+    memcpy(path, e->name, name_len * sizeof(WCHAR));
+    path += name_len;
+    *path++ = delimiter;
+    len += name_len + 1;
+  } while(depth--);
+
+  path[-1] = 0;
+  return (int)(--len);
+
+fin:
+  return hr; 
+}
+
 int FileTree::get_dir_num_item(const FileTreeEnum & ftenum)	noexcept
 {
   if (!ftenum.owner)
