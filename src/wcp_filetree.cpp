@@ -306,12 +306,11 @@ fin:
   return hr ? NULL : elem;
 }
 
-bool FileTree::find_directory(FileTreeEnum & ftenum, LPCWSTR curdir) noexcept
+bool FileTree::find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept
 {
-  ftenum.dir = NULL;
-  ftenum.file = NULL;
-  ftenum.owner = find_directory(curdir);
-  return ftenum.owner ? true : false;
+  direnum.reset();
+  direnum.owner = find_directory(curdir);
+  return direnum.owner ? true : false;
 };
 
 int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
@@ -355,41 +354,50 @@ fin:
   return hr; 
 }
 
-int FileTree::get_dir_num_item(const FileTreeEnum & ftenum)	noexcept
+// ==================================================================================
+
+static int get_dir_num_item(const TTreeElem * dir) noexcept
 {
-  if (!ftenum.owner)
+  if (!dir)
     return -1;
 
   int count = 0;
-  for (TTreeElem * elem = ftenum.owner->content.node.dir.head; elem != NULL; elem = elem->next) {
+  for (TTreeElem * elem = dir->content.node.dir.head; elem != NULL; elem = elem->next) {
     count++;
   }
-  for (TTreeElem * elem = ftenum.owner->content.node.file.head; elem != NULL; elem = elem->next) {
+  for (TTreeElem * elem = dir->content.node.file.head; elem != NULL; elem = elem->next) {
     count++;
   }
   return count;
 }
 
-TTreeElem * FileTree::get_next(FileTreeEnum & ftenum) noexcept
+// ===========================================================================================
+
+int TDirEnum::get_num_of_items() noexcept
 {
-  if (ftenum.owner) {
-    if (!ftenum.dir) {
-      ftenum.dir = ftenum.owner->content.node.dir.head;
-      if (ftenum.dir)
-        return ftenum.dir;
+  return get_dir_num_item((const PTreeElem)owner);
+}
+
+TTreeElem * TDirEnum::get_next() noexcept
+{
+  if (owner) {
+    if (!dir) {
+      dir = owner->content.node.dir.head;
+      if (dir)
+        return dir;
     }
-    if (ftenum.dir && ftenum.dir->next) {
-      ftenum.dir = ftenum.dir->next;
-      return ftenum.dir;
+    if (dir && dir->next) {
+      dir = dir->next;
+      return dir;
     }
-    if (!ftenum.file) {
-      ftenum.file = ftenum.owner->content.node.file.head;
-      if (ftenum.file)
-        return ftenum.file;
+    if (!file) {
+      file = owner->content.node.file.head;
+      if (file)
+        return file;
     }
-    if (ftenum.file && ftenum.file->next) {
-      ftenum.file = ftenum.file->next;
-      return ftenum.file;
+    if (file && file->next) {
+      file = file->next;
+      return file;
     }
   }
   return NULL;

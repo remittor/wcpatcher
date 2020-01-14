@@ -103,13 +103,13 @@ int TTreeElem::set_data(PFileItem file_item) noexcept
   return 0;
 }
 
+static int get_dir_num_item(const TTreeElem * dir) noexcept;
+
 // ==================================================================================
 
-struct FileTreeEnum {
-  TTreeElem * owner;
-  TTreeElem * dir;
-  TTreeElem * file;
-};
+struct TDirEnum;   /* forward declaration */
+typedef TDirEnum * PDirEnum;
+
 
 class FileTree
 {
@@ -122,12 +122,10 @@ public:
   void set_internal_mm(bool enabled) { m_use_mm = enabled; }
   int add_file_item(PFileItem fitem) noexcept;
   TTreeElem * find_directory(LPCWSTR curdir) noexcept;
-  bool find_directory(FileTreeEnum & ftenum, LPCWSTR curdir) noexcept;
+  bool find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept;
 
   int get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
 
-  int get_dir_num_item(const FileTreeEnum & ftenum) noexcept;
-  TTreeElem * get_next(FileTreeEnum & ftenum) noexcept;
   size_t get_num_elem() { return m_elem_count; }
 
 private:
@@ -153,6 +151,28 @@ private:
   bool        m_use_mm;    /* use simple memory manager */
   simplemm    m_mm;
 };
+
+// ==================================================================================
+
+#pragma pack(push, 1)
+
+struct TDirEnum {
+  TTreeElem * owner;  /* cur owner-dir */
+  TTreeElem * dir;    /* cur subdir in owner */
+  TTreeElem * file;   /* cur file in owner */
+
+  void reset(TTreeElem * _owner = NULL) noexcept
+  {
+    owner = _owner;
+    dir = NULL;
+    file = NULL;
+  }
+
+  int get_num_of_items() noexcept;
+  TTreeElem * get_next() noexcept;
+};
+
+#pragma pack(pop)
 
 
 } /* namespace */

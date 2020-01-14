@@ -140,8 +140,8 @@ int filecache::TcCreateFileInfo(char mode, LPCWSTR fileName, BYTE fileAttr, INT6
 
   m_dir_gen.init();
 
-  FileTreeEnum ftenum;
-  bool x = m_ftree.find_directory(ftenum, m_CurDir.c_str());
+  TDirEnum direnum;
+  bool x = m_ftree.find_directory(direnum, m_CurDir.c_str());
   FIN_IF(!x, -10);
   //int ecnt = m_ftree.get_dir_num_item(ftenum);
   //FIN_IF(ecnt < 0, -11);
@@ -155,7 +155,7 @@ int filecache::TcCreateFileInfo(char mode, LPCWSTR fileName, BYTE fileAttr, INT6
   PFileItem * fiarray = (PFileItem *)m_fitem_array.data();
   size_t cnt = 0;
   TTreeElem * elem;
-  while (elem = m_ftree.get_next(ftenum)) {
+  while (elem = direnum.get_next()) {
     if (elem->data) {
       if ((cnt + 2) * sizeof(PFileItem) >= m_fitem_array.size()) {
         PBYTE p = m_fitem_array.expand(alloc_factor * sizeof(PFileItem));
