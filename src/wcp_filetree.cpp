@@ -313,6 +313,13 @@ bool FileTree::find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept
   return direnum.owner ? true : false;
 };
 
+bool FileTree::find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth) noexcept
+{
+  TTreeElem * dir = find_directory(curdir);
+  tenum.reset(dir, max_depth);
+  return dir ? true : false;
+};
+
 int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
 {
   int hr = -1;
@@ -403,5 +410,29 @@ TTreeElem * TDirEnum::get_next() noexcept
   return NULL;
 };
 
+// ===========================================================================================
+
+TTreeElem * TTreeEnum::get_next() noexcept
+{
+  if (!m_root)
+    return NULL;
+
+  TDirEnum * direnum = &m_path[m_cur_depth];
+  TTreeElem * elem = direnum->get_next();
+  while (!elem) {
+    if (m_cur_depth == 0)
+      return NULL;   /* END */
+    m_cur_depth--;
+    direnum = &m_path[m_cur_depth];
+    elem = direnum->get_next();
+  }
+  if (elem->is_dir()) {
+    if (m_cur_depth < m_max_depth) {
+      m_cur_depth++;
+      m_path[m_cur_depth].reset(elem);
+    }
+  }
+  return elem;
+}
 
 } /* namespace */

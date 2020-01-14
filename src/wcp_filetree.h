@@ -110,6 +110,8 @@ static int get_dir_num_item(const TTreeElem * dir) noexcept;
 struct TDirEnum;   /* forward declaration */
 typedef TDirEnum * PDirEnum;
 
+class TTreeEnum;  /* forward declaration */
+
 
 class FileTree
 {
@@ -120,9 +122,11 @@ public:
   void clear() noexcept;
   void set_case_sensitive(bool is_case_sensitive) noexcept;
   void set_internal_mm(bool enabled) { m_use_mm = enabled; }
+
   int add_file_item(PFileItem fitem) noexcept;
   TTreeElem * find_directory(LPCWSTR curdir) noexcept;
   bool find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept;
+  bool find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth = 0) noexcept;
 
   int get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
 
@@ -173,6 +177,34 @@ struct TDirEnum {
 };
 
 #pragma pack(pop)
+
+
+class TTreeEnum
+{
+public:
+  static const size_t max_dir_depth = 255;
+
+  TTreeEnum() noexcept : m_root(NULL) {  }
+  ~TTreeEnum() noexcept {  }
+
+  void reset(TTreeElem * root, size_t max_depth = 0) noexcept
+  {
+    m_root = root;
+    m_max_depth = (max_depth == 0 || max_depth > max_dir_depth) ? max_dir_depth : max_depth - 1;
+    m_cur_depth = 0;
+    memset(m_path, 0, sizeof(m_path));
+    m_path[0].reset(m_root);
+  }
+  
+  TTreeElem * TTreeEnum::get_next() noexcept;
+
+private:
+  TTreeElem * m_root;
+  TDirEnum    m_path[max_dir_depth + 1];
+  size_t      m_max_depth;
+  size_t      m_cur_depth;
+  
+};
 
 
 } /* namespace */
