@@ -151,12 +151,13 @@ private:
   TTreeElem * get_last_elem(PTreeElem base, bool dirlist) { return base->is_dir() ? base->content.node.get_list(dirlist)->tail : NULL; }
   LPCWSTR get_owner_data_name(PTreeElem elem) { return elem->owner ? (elem->owner->data ? elem->owner->data->name : NULL) : NULL; }
 
-  bool        m_case_sensitive;
   TTreeElem   m_root;
   size_t      m_elem_count;
   size_t      m_capacity;
-  bool        m_use_mm;    /* use simple memory manager */
   simplemm    m_mm;
+
+  bool        m_case_sensitive;
+  bool        m_use_mm;    /* use simple memory manager */
 };
 
 // ==================================================================================

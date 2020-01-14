@@ -335,6 +335,7 @@ int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR del
   path[0] = 0;
   FIN_IF(elem == &m_root, -2);  /* path returned without root name */
 
+  size_t len = 0;
   size_t depth = 0;
   TTreeElem * e = elem;
   do { 
@@ -342,24 +343,25 @@ int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR del
       break;
     FIN_IF(depth == max_depth, -5);
     branch[depth++] = e;
+    len += e->name_len + 1;
   } while (e = e->owner);
 
   FIN_IF(depth == 0, -6);
   depth--;
+  FIN_IF(len == 0, -7);
+  FIN_IF(len >= path_cap, -8);
+  len--;
 
-  size_t len = 0;
   do {
     TTreeElem * e = branch[depth];
     const size_t name_len = e->name_len;
-    FIN_IF(len + name_len + 1 >= path_cap, -7);
     memcpy(path, e->name, name_len * sizeof(WCHAR));
     path += name_len;
     *path++ = delimiter;
-    len += name_len + 1;
   } while(depth--);
 
   path[-1] = 0;
-  return (int)(--len);
+  return (int)len;
 
 fin:
   return hr; 

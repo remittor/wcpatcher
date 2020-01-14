@@ -20,6 +20,12 @@ public:
 
   static_assert(sizeof(mem_block_header) % 16 == 0, "error_mem_block_header");
 
+private:
+  mem_block_header * m_head;
+  mem_block_header * m_tail;
+  bool m_zero_fill;
+
+public:
   simplemm() noexcept : m_head(0), m_tail(0)
   {
     m_zero_fill = false;
@@ -111,10 +117,6 @@ private:
     }
     return NULL;
   }
-
-  bool m_zero_fill;
-  mem_block_header * m_head;
-  mem_block_header * m_tail;
 };
 
 } /* namespace */
