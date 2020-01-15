@@ -53,6 +53,47 @@ int TTreeElem::get_dir_num_of_items() noexcept
   return count;
 }
 
+int TTreeElem::get_path(LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
+{
+  int hr = -1;
+  const size_t max_depth = 512;
+  PTreeElem branch[max_depth + 1];
+
+  FIN_IF(is_root(), -2);  /* path returned without root name */
+
+  size_t path_len = 0;
+  size_t depth = 0;
+  TTreeElem * e = this;
+  do { 
+    if (e->is_root())
+      break;
+    FIN_IF(depth == max_depth, -5);
+    branch[depth++] = e;
+    path_len += e->name_len + 1;
+  } while (e = e->owner);
+
+  FIN_IF(depth == 0, -6);
+  depth--;
+  FIN_IF(path_len == 0, -7);
+  path_len--;
+  if (path) {
+    FIN_IF(path_len >= path_cap, -8);
+    do {
+      TTreeElem * e = branch[depth];
+      const size_t nlen = e->name_len;
+      memcpy(path, e->name, nlen * sizeof(WCHAR));
+      path += nlen;
+      *path++ = delimiter;
+    } while(depth--);
+
+    path[-1] = 0;
+  }
+  return (int)path_len;
+
+fin:
+  return hr; 
+}
+
 // =====================================================================================
 
 FileTree::FileTree() noexcept
@@ -371,49 +412,6 @@ bool FileTree::find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_dept
   tenum.reset(dir, max_depth);
   return dir ? true : false;
 };
-
-int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
-{
-  int hr = -1;
-  const size_t max_depth = 512;
-  PTreeElem branch[max_depth + 1];
-
-  FIN_IF(!elem, -1);
-  FIN_IF(!path, -1);
-  path[0] = 0;
-  FIN_IF(elem->is_root(), -2);  /* path returned without root name */
-
-  size_t len = 0;
-  size_t depth = 0;
-  TTreeElem * e = elem;
-  do { 
-    if (e->is_root())
-      break;
-    FIN_IF(depth == max_depth, -5);
-    branch[depth++] = e;
-    len += e->name_len + 1;
-  } while (e = e->owner);
-
-  FIN_IF(depth == 0, -6);
-  depth--;
-  FIN_IF(len == 0, -7);
-  FIN_IF(len >= path_cap, -8);
-  len--;
-
-  do {
-    TTreeElem * e = branch[depth];
-    const size_t name_len = e->name_len;
-    memcpy(path, e->name, name_len * sizeof(WCHAR));
-    path += name_len;
-    *path++ = delimiter;
-  } while(depth--);
-
-  path[-1] = 0;
-  return (int)len;
-
-fin:
-  return hr; 
-}
 
 // ===========================================================================================
 

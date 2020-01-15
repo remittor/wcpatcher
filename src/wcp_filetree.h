@@ -69,6 +69,7 @@ struct TTreeElem {
   int set_data(PFileItem file_item) noexcept;
   int set_name(LPCWSTR elem_name, size_t elem_name_len) noexcept;
   int get_dir_num_of_items() noexcept;
+  int get_path(LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
 };
 
 #pragma pack(pop)
@@ -95,8 +96,6 @@ public:
   TTreeElem * find_directory(LPCWSTR curdir, WCHAR delimiter = L'\\') noexcept;
   bool find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept;
   bool find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth = 0) noexcept;
-
-  int get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
 
   size_t get_num_elem() { return m_elem_count; }
   size_t get_capacity() { return m_capacity; }
