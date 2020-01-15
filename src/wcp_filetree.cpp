@@ -7,6 +7,54 @@
 
 namespace wcp {
 
+__forceinline
+void TTreeElem::push_subelem(PTreeElem elem) noexcept
+{
+  if (this->is_dir()) {
+    TElemList * elist = get_elem_list(elem->is_dir());
+    if (!elist->head)
+      elist->head = elem;    /* first elem */
+
+    if (elist->tail)
+      elist->tail->next = elem;
+
+    elist->tail = elem;
+  }
+}
+
+__forceinline
+int TTreeElem::set_data(PFileItem file_item) noexcept
+{
+  name_pos = 0;
+  data = file_item;
+  if (file_item && file_item->name) {
+    //bool item_is_dir = (file_item->attr & tfa::DIRECTORY) != 0;
+    LPCWSTR p = wcsrchr(file_item->name, L'\\');
+    if (p) {
+      name_pos = (UINT16)(((size_t)p - (size_t)file_item->name) / sizeof(WCHAR));
+      name_pos++;   /* skip backslash */
+    }
+  }
+  return 0;
+}
+
+int TTreeElem::get_dir_num_of_items() noexcept
+{
+  if (!is_dir())
+    return -1;
+
+  int count = 0;
+  for (TTreeElem * elem = content.node.dir.head; elem != NULL; elem = elem->next) {
+    count++;
+  }
+  for (TTreeElem * elem = content.node.file.head; elem != NULL; elem = elem->next) {
+    count++;
+  }
+  return count;
+}
+
+// =====================================================================================
+
 FileTree::FileTree() noexcept
 {
   m_case_sensitive = false;
@@ -367,29 +415,7 @@ fin:
   return hr; 
 }
 
-// ==================================================================================
-
-static int get_dir_num_item(const TTreeElem * dir) noexcept
-{
-  if (!dir)
-    return -1;
-
-  int count = 0;
-  for (TTreeElem * elem = dir->content.node.dir.head; elem != NULL; elem = elem->next) {
-    count++;
-  }
-  for (TTreeElem * elem = dir->content.node.file.head; elem != NULL; elem = elem->next) {
-    count++;
-  }
-  return count;
-}
-
 // ===========================================================================================
-
-int TDirEnum::get_num_of_items() noexcept
-{
-  return get_dir_num_item((const PTreeElem)owner);
-}
 
 TTreeElem * TDirEnum::get_next() noexcept
 {

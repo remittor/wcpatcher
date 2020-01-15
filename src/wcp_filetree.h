@@ -68,44 +68,10 @@ struct TTreeElem {
   void push_subelem(PTreeElem elem) noexcept;
   int set_data(PFileItem file_item) noexcept;
   int set_name(LPCWSTR elem_name, size_t elem_name_len) noexcept;
+  int get_dir_num_of_items() noexcept;
 };
 
 #pragma pack(pop)
-
-// ==================================================================================
-
-__forceinline
-void TTreeElem::push_subelem(PTreeElem elem) noexcept
-{
-  if (this->is_dir()) {
-    TElemList * elist = get_elem_list(elem->is_dir());
-    if (!elist->head)
-      elist->head = elem;    /* first elem */
-
-    if (elist->tail)
-      elist->tail->next = elem;
-
-    elist->tail = elem;
-  }
-}
-
-__forceinline
-int TTreeElem::set_data(PFileItem file_item) noexcept
-{
-  name_pos = 0;
-  data = file_item;
-  if (file_item && file_item->name) {
-    //bool item_is_dir = (file_item->attr & TcFileAttr::DIRECTORY) != 0;
-    LPCWSTR p = wcsrchr(file_item->name, L'\\');
-    if (p) {
-      name_pos = (UINT16)(((size_t)p - (size_t)file_item->name) / sizeof(WCHAR));
-      name_pos++;   /* skip backslash */
-    }
-  }
-  return 0;
-}
-
-static int get_dir_num_item(const TTreeElem * dir) noexcept;
 
 // ==================================================================================
 
@@ -178,7 +144,7 @@ struct TDirEnum {
     file = NULL;
   }
 
-  int get_num_of_items() noexcept;
+  int get_num_of_items() noexcept { return owner->get_dir_num_of_items(); }
   TTreeElem * get_next() noexcept;
 };
 
