@@ -11,7 +11,7 @@ __forceinline
 void TTreeElem::push_subelem(PTreeElem elem) noexcept
 {
   if (this->is_dir()) {
-    TElemList * elist = get_elem_list(elem->is_dir());
+    TElemList * elist = this->get_elem_list(elem);
     if (!elist->head)
       elist->head = elem;    /* first elem */
 
@@ -40,7 +40,7 @@ int TTreeElem::set_data(PFileItem file_item) noexcept
 
 int TTreeElem::get_dir_num_of_items() noexcept
 {
-  if (!is_dir())
+  if (!this->is_dir())
     return -1;
 
   int count = 0;
@@ -59,7 +59,7 @@ int TTreeElem::get_path(LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
   const size_t max_depth = 512;
   PTreeElem branch[max_depth + 1];
 
-  FIN_IF(is_root(), -2);  /* path returned without root name */
+  FIN_IF(this->is_root(), -2);  /* path returned without root name */
 
   size_t path_len = 0;
   size_t depth = 0;
@@ -94,6 +94,52 @@ fin:
   return hr; 
 }
 
+TTreeElem * TTreeElem::get_prev() noexcept
+{
+  if (this->is_root())
+    return NULL;
+
+  if (!this->owner)
+    return NULL;  /* critical error !!! */
+
+  TElemList * elist = this->owner->get_elem_list(this);
+  TTreeElem * e_prev = NULL;
+  for (TTreeElem * elem = elist->head; elem != NULL; elem = elem->next) {
+    if (elem == this)
+      return e_prev;
+    e_prev = elem;
+  }
+  return NULL;
+}
+
+bool TTreeElem::unlink() noexcept
+{
+  if (this->is_root())
+    return false;
+
+  if (!this->owner)
+    return false;  /* critical error !!! */
+
+  TElemList * elist = this->owner->get_elem_list(this);
+  if (elist->head == elist->tail) {
+    assert(this == elist->head);
+    elist->head = NULL;
+    elist->tail = NULL;
+  } else {
+    TTreeElem * e_prev = get_prev();
+    if (e_prev) {
+      e_prev->next = this->next;
+      if (elist->tail == this) {
+        assert(this->next == NULL);
+        elist->tail = e_prev;
+      }
+    } else {
+      elist->head = this->next;
+    }
+  }
+  return true;
+}
+
 // =====================================================================================
 
 FileTree::FileTree() noexcept
@@ -109,18 +155,24 @@ FileTree::~FileTree() noexcept
   clear();
 }
 
-void FileTree::unlink_elem(PTreeElem elem) noexcept
+bool FileTree::unlink_elem(PTreeElem elem) noexcept
 {
-  /* NOT IMPLEMENTED !!! */
-  // TODO: add support unlink elem
+  if (elem) {
+    bool x = elem->unlink();
+    if (x && !m_use_mm && !elem->is_root()) {
+      free(elem);
+    }
+    return x;
+  }
+  return false;
 }
 
-void FileTree::destroy_elem(PTreeElem elem, bool total_destroy)	noexcept
+void FileTree::destroy_elem(PTreeElem elem, bool total_destroy) noexcept
 {
   if (elem) {
     destroy_content(elem, total_destroy);
     if (!total_destroy) {
-      unlink_elem(elem);   /* remove all links to this elem */
+      elem->unlink();      /* remove all links to this elem */
     }
     if (!m_use_mm && !elem->is_root()) {
       free(elem);

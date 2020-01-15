@@ -65,11 +65,15 @@ struct TTreeElem {
   bool is_content_case_sens() { return (flags & EFLAG_CONT_CASE_SENS) != 0; }
   LPCWSTR get_data_name() { return data ? (data->name ? data->name + name_pos : NULL) : NULL; }
   TElemList * get_elem_list(bool dirlist) { return is_dir() ? content.node.get_list(dirlist) : NULL; }
+  TElemList * get_elem_list(TTreeElem * base) { return get_elem_list(base->is_dir()); }
   void push_subelem(PTreeElem elem) noexcept;
   int set_data(PFileItem file_item) noexcept;
   int set_name(LPCWSTR elem_name, size_t elem_name_len) noexcept;
   int get_dir_num_of_items() noexcept;
   int get_path(LPWSTR path, size_t path_cap, WCHAR delimiter = L'\\') noexcept;
+  TTreeElem * get_prev() noexcept;
+  TTreeElem * get_next() noexcept { return next; }
+  bool unlink() noexcept;
 };
 
 #pragma pack(pop)
@@ -105,7 +109,7 @@ private:
   void reset_root_elem() noexcept;
   void destroy_elem(PTreeElem elem, bool total_destroy = false) noexcept;
   void destroy_content(PTreeElem elem, bool total_destroy = false) noexcept;
-  void unlink_elem(PTreeElem elem) noexcept;
+  bool unlink_elem(PTreeElem elem) noexcept;
 
   TTreeElem * find_subelem(PTreeElem base, LPCWSTR name, size_t name_len, bool is_dir) noexcept;
   TTreeElem * find_subdir(PTreeElem base, LPCWSTR name, size_t name_len) noexcept;
