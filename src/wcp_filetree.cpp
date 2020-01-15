@@ -33,7 +33,7 @@ void FileTree::destroy_elem(PTreeElem elem, bool total_destroy)	noexcept
     if (!total_destroy) {
       unlink_elem(elem);   /* remove all links to this elem */
     }
-    if (!m_use_mm && elem != &m_root) {
+    if (!m_use_mm && !elem->is_root()) {
       free(elem);
     }
   }
@@ -79,9 +79,9 @@ void FileTree::reset_root_elem() noexcept
   m_elem_count = 0;
   m_capacity = 0;
   memset(&m_root, 0, sizeof(m_root));
-  m_root.flags = EFLAG_DIRECTORY;
+  m_root.flags = EFLAG_ROOT | EFLAG_DIRECTORY;
   if (m_case_sensitive)
-    m_root.flags = EFLAG_NAME_CASE_SENS | EFLAG_CONT_CASE_SENS;
+    m_root.flags |= EFLAG_NAME_CASE_SENS | EFLAG_CONT_CASE_SENS;
 }
 
 void FileTree::set_case_sensitive(bool is_case_sensitive) noexcept
@@ -333,13 +333,13 @@ int FileTree::get_path(TTreeElem * elem, LPWSTR path, size_t path_cap, WCHAR del
   FIN_IF(!elem, -1);
   FIN_IF(!path, -1);
   path[0] = 0;
-  FIN_IF(elem == &m_root, -2);  /* path returned without root name */
+  FIN_IF(elem->is_root(), -2);  /* path returned without root name */
 
   size_t len = 0;
   size_t depth = 0;
   TTreeElem * e = elem;
   do { 
-    if (e == &m_root)
+    if (e->is_root())
       break;
     FIN_IF(depth == max_depth, -5);
     branch[depth++] = e;

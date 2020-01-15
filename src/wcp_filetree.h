@@ -14,6 +14,7 @@ const UINT16 EFLAG_DIRECTORY      = 0x0001;
 const UINT16 EFLAG_FILE_ADDR      = 0x0002;     /* file elem have addr */
 const UINT16 EFLAG_NAME_CASE_SENS = 0x0004;     /* elem name is case sensitive (ala UNIX) */
 const UINT16 EFLAG_CONT_CASE_SENS = 0x0008;     /* dir content is case sensitive (ala UNIX) */
+const UINT16 EFLAG_ROOT           = 0x0010;
 
 
 #pragma pack(push, 1)
@@ -57,6 +58,7 @@ struct TTreeElem {
   UINT16          name_len;     /* length of name (number of character without zero-termination) */
   WCHAR           name[1];      /* renaming possible, but required realloc struct for longer names */
 
+  bool is_root() { return (flags & EFLAG_ROOT) != 0; }
   bool is_dir()  { return (flags & EFLAG_DIRECTORY) != 0; }
   bool is_file() { return (flags & EFLAG_DIRECTORY) == 0; }
   bool is_name_case_sens() { return (flags & EFLAG_NAME_CASE_SENS) != 0; }
