@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "wcp_filetree.h"
+#include <cassert>
 
 #define XXH_INLINE_ALL
 #include "xxh3.h"
@@ -56,8 +57,10 @@ int TTreeElem::get_dir_num_of_items() noexcept
 int TTreeElem::get_path(LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
 {
   int hr = -1;
-  const size_t max_depth = 512;
-  PTreeElem branch[max_depth + 1];
+  const size_t prealloc_branch_cap = 512;
+  PTreeElem pbuf[prealloc_branch_cap];
+  PTreeElem * branch = pbuf;
+  size_t branch_cap = prealloc_branch_cap;
 
   FIN_IF(this->is_root(), -2);  /* path returned without root name */
 
@@ -67,7 +70,17 @@ int TTreeElem::get_path(LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
   do { 
     if (e->is_root())
       break;
-    FIN_IF(depth == max_depth, -5);
+    if (depth >= branch_cap - 2) {
+      const size_t new_cap = branch_cap + prealloc_branch_cap;
+      LPVOID buf = calloc(new_cap, sizeof(TDirEnum));
+      FIN_IF(!buf, -4);
+      memcpy(buf, branch, branch_cap * sizeof(TDirEnum));
+      if (branch != pbuf) {
+        free(branch);
+      }
+      branch = (PTreeElem *)buf;
+      branch_cap = new_cap;
+    }
     branch[depth++] = e;
     path_len += e->name_len + 1;
   } while (e = e->owner);
@@ -88,10 +101,12 @@ int TTreeElem::get_path(LPWSTR path, size_t path_cap, WCHAR delimiter) noexcept
 
     path[-1] = 0;
   }
-  return (int)path_len;
+  hr = (int)path_len;
 
 fin:
-  return hr; 
+  if (branch != pbuf)
+    free(branch);
+  return hr;
 }
 
 TTreeElem * TTreeElem::get_prev() noexcept
@@ -496,25 +511,41 @@ TTreeElem * TDirEnum::get_next() noexcept
 
 TTreeElem * TTreeEnum::get_next() noexcept
 {
-  if (!m_root)
-    return NULL;
+  int hr = 0;
+  TTreeElem * elem = NULL;
+
+  FIN_IF(!m_root, -1);
 
   TDirEnum * direnum = &m_path[m_cur_depth];
-  TTreeElem * elem = direnum->get_next();
+  elem = direnum->get_next();
   while (!elem) {
-    if (m_cur_depth == 0)
-      return NULL;   /* END */
+    FIN_IF(m_cur_depth == 0, 0);  /* END */
     m_cur_depth--;
     direnum = &m_path[m_cur_depth];
     elem = direnum->get_next();
   }
   if (elem->is_dir()) {
     if (m_cur_depth < m_max_depth) {
+      if (m_cur_depth >= m_path_cap - 2) {
+        const size_t new_cap = m_path_cap + prealloc_path_depth;
+        LPVOID buf = calloc(new_cap, sizeof(TDirEnum));
+        FIN_IF(!buf, 1);   /* skip next dir level */
+        memcpy(buf, m_path, m_path_cap * sizeof(TDirEnum));
+        if (m_path != m_buf) {
+          free(m_path);
+        }
+        m_path = (TDirEnum *)buf;
+        m_path_cap = new_cap;
+      }
       m_cur_depth++;
       m_path[m_cur_depth].reset(elem);
     }
   }
   return elem;
+
+fin:
+  LOGe_IF(hr, "%s: ERROR = %d", __func__, hr);
+  return (hr <= 0) ? NULL : elem;
 }
 
 } /* namespace */

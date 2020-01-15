@@ -157,25 +157,36 @@ struct TDirEnum {
 class TTreeEnum
 {
 public:
-  static const size_t max_dir_depth = 255;
+  static const size_t prealloc_path_depth = 256;
 
-  TTreeEnum() noexcept : m_root(NULL) {  }
-  ~TTreeEnum() noexcept {  }
+  TTreeEnum() noexcept : m_root(NULL)
+  {
+    m_path = m_buf;
+    m_path_cap = prealloc_path_depth;
+  }
+
+  ~TTreeEnum() noexcept
+  {
+    if (m_path != m_buf)
+      free(m_path);
+  }
 
   void reset(TTreeElem * root, size_t max_depth = 0) noexcept
   {
     m_root = root;
-    m_max_depth = (max_depth == 0 || max_depth > max_dir_depth) ? max_dir_depth : max_depth - 1;
+    m_max_depth = (max_depth == 0) ? INT_MAX : max_depth - 1;
     m_cur_depth = 0;
-    memset(m_path, 0, sizeof(m_path));
+    memset(m_path, 0, m_path_cap * sizeof(TDirEnum));
     m_path[0].reset(m_root);
   }
-  
+
   TTreeElem * TTreeEnum::get_next() noexcept;
 
 private:
   TTreeElem * m_root;
-  TDirEnum    m_path[max_dir_depth + 1];
+  TDirEnum  * m_path;
+  size_t      m_path_cap;
+  TDirEnum    m_buf[prealloc_path_depth];
   size_t      m_max_depth;
   size_t      m_cur_depth;
 };
