@@ -466,17 +466,17 @@ fin:
   return hr ? NULL : elem;
 }
 
-bool FileTree::find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept
+bool FileTree::find_directory(TDirEnum & direnum, LPCWSTR curdir, WCHAR delimiter) noexcept
 {
   direnum.reset();
-  direnum.owner = find_directory(curdir);
+  direnum.owner = find_directory(curdir, delimiter);
   return direnum.owner ? true : false;
 };
 
-bool FileTree::find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth) noexcept
+bool FileTree::find_directory(TTreeEnum & tenum, LPCWSTR curdir, WCHAR delimiter, size_t max_depth) noexcept
 {
-  TTreeElem * dir = find_directory(curdir);
-  tenum.reset(dir, max_depth);
+  TTreeElem * dir = find_directory(curdir, delimiter);
+  tenum.init(dir, max_depth);
   return dir ? true : false;
 };
 
@@ -538,7 +538,7 @@ TTreeElem * TTreeEnum::get_next() noexcept
         m_path_cap = new_cap;
       }
       m_cur_depth++;
-      m_path[m_cur_depth].reset(elem);
+      m_path[m_cur_depth].init(elem);
     }
   }
   return elem;

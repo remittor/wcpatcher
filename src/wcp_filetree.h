@@ -89,6 +89,8 @@ class TTreeEnum;  /* forward declaration */
 class FileTree
 {
 public:
+  friend class TTreeEnum;
+
   FileTree() noexcept;
   ~FileTree() noexcept;
 
@@ -98,12 +100,15 @@ public:
 
   int add_file_item(LPCWSTR fullname, PFileItem fitem, OUT PTreeElem * lpElem) noexcept;
   TTreeElem * find_directory(LPCWSTR curdir, WCHAR delimiter = L'\\') noexcept;
-  bool find_directory(TDirEnum & direnum, LPCWSTR curdir) noexcept;
-  bool find_directory(TTreeEnum & tenum, LPCWSTR curdir, size_t max_depth = 0) noexcept;
+  bool find_directory(TDirEnum & direnum, LPCWSTR curdir, WCHAR delimiter = L'\\') noexcept;
+  bool find_directory(TTreeEnum & tenum, LPCWSTR curdir, WCHAR delimiter = L'\\', size_t max_depth = 0) noexcept;
 
   size_t get_num_elem() { return m_elem_count; }
   size_t get_capacity() { return m_capacity; }
   bool is_overfill() { return m_elem_count == SIZE_MAX - 1; }
+
+protected:
+  TTreeElem * get_root() { return &m_root; }
 
 private:
   void reset_root_elem() noexcept;
@@ -140,14 +145,10 @@ struct TDirEnum {
   TTreeElem * dir;    /* cur subdir in owner */
   TTreeElem * file;   /* cur file in owner */
 
-  void reset(TTreeElem * _owner = NULL) noexcept
-  {
-    owner = _owner;
-    dir = NULL;
-    file = NULL;
-  }
-
-  int get_num_of_items() noexcept { return owner->get_dir_num_of_items(); }
+  void init(TTreeElem * base) noexcept { owner = base; reset(); }
+  void reset() noexcept { dir = NULL; file = NULL; }
+  bool is_inited() { return owner != NULL; }
+  int get_num_of_items() noexcept { return owner ? owner->get_dir_num_of_items() : -1; }
   TTreeElem * get_next() noexcept;
 };
 
@@ -156,13 +157,26 @@ struct TDirEnum {
 
 class TTreeEnum
 {
-public:
+private:
   static const size_t prealloc_path_depth = 256;
 
-  TTreeEnum() noexcept : m_root(NULL)
+  void set_defaults() noexcept
   {
+    m_root = NULL;
     m_path = m_buf;
     m_path_cap = prealloc_path_depth;
+  }
+
+public:
+  TTreeEnum() noexcept
+  {
+    set_defaults();
+  }
+
+  TTreeEnum(TTreeElem * root) noexcept
+  {
+    set_defaults();
+    init(root);
   }
 
   ~TTreeEnum() noexcept
@@ -171,15 +185,23 @@ public:
       free(m_path);
   }
 
-  void reset(TTreeElem * root, size_t max_depth = 0) noexcept
+  bool init(TTreeElem * root, size_t max_depth = 0) noexcept
   {
-    m_root = root;
+    m_root = (root && root->is_dir()) ? root : NULL;
+    reset(max_depth);
+    return is_inited();
+  }
+
+  bool reset(size_t max_depth = 0) noexcept
+  {
     m_max_depth = (max_depth == 0) ? INT_MAX : max_depth - 1;
     m_cur_depth = 0;
     memset(m_path, 0, m_path_cap * sizeof(TDirEnum));
-    m_path[0].reset(m_root);
+    m_path[0].init(m_root);
+    return is_inited();
   }
 
+  bool is_inited() { return m_root != NULL; }
   TTreeElem * TTreeEnum::get_next() noexcept;
 
 private:
