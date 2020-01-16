@@ -195,8 +195,9 @@ fin:
     if (fh)
       delete fh;
     LOGe("%s: ERROR = %d (%s)", __func__, hr, obj.name);
+    return NULL;
   }
-  return hr ? NULL : fh;
+  return fh;
 }
 
 static void set_main_func(func_hook * fh, FuncMainHook func_addr)

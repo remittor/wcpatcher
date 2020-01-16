@@ -122,13 +122,11 @@ int tramp_mm::init(LPCVOID start) noexcept
     //LOGe_IF(!mem, "%s: ERROR = %d (0x%p)", __func__, GetLastError(), addr);
     if (mem) {
       FIN_IF((PBYTE)mem != addr, -13);
-      if (mem) {
-        m_base_addr = addr;
-        break;
-      }
+      m_base_addr = addr;
+      break;
     }
   }
-  FIN_IF(!m_base_addr, -14);
+  //FIN_IF(!m_base_addr, -14);
   FIN_IF((SIZE_T)m_base_addr - (SIZE_T)start > 0x50000000, -15);
   memcpy(m_base_addr, wcp_trampoline_region, sizeof(wcp_trampoline_region));
   m_count = 0;  

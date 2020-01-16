@@ -114,8 +114,6 @@ int filecache::TcCreateFileInfo(char mode, LPCWSTR fileName, BYTE fileAttr, INT6
 
   FIN_IF(m_ArcName.empty(), -2);
 
-  FIN_IF(m_fc_patch_status == psDisabled, 0);
-
   if (m_item_count == SIZE_MAX) {
     //m_dir_gen.init();
     size_t item_cnt = m_WcxItem->count;
@@ -265,7 +263,7 @@ int filecachelist::WcxProcessor(bool init, int type_index, LPCWSTR ArcName, LPWS
   int hr = -1;
 
   m_current_index = wcx_index;
-  FIN_IF((SSIZE_T)wcx_index < 0, -2);
+  FIN_IF((char)wcx_index < 0, -2);
   FIN_IF(wcx_index >= max_cache_num, -3);
   update_cfg();
   PFileCollection * pWcxItemPtr = &m_WcxItemList[wcx_index];
