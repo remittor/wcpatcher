@@ -11,19 +11,19 @@
 
 #define BST_NOTHROW      __declspec(nothrow)
 
-#if _MSC_VER < 1900
+#if (_MSC_VER < 1900) && !defined(__MINGW32__)
 #if !defined(__func__)
 #define __func__   __FUNCTION__
 #endif
 #endif
 
-#if _MSC_VER < 1600
+#if (_MSC_VER < 1600) && !defined(__MINGW32__)
 #if !defined(nullptr)
 #define nullptr  NULL
 #endif
 #endif
 
-#if _MSC_VER < 1800
+#if (_MSC_VER < 1800) && !defined(__MINGW32__)
 #define BST_DEFAULT 
 #define BST_DELETED 
 #else
@@ -31,7 +31,8 @@
 #define BST_DELETED  =delete
 #endif 
 
-#if _MSC_FULL_VER < 180021114    /* noexcept added since vs2013 CTP */
+/* noexcept added since vs2013 CTP */
+#if (_MSC_FULL_VER < 180021114) && !defined(__MINGW32__)
 #if !defined(noexcept)
 #define noexcept throw()
 #endif
@@ -45,7 +46,7 @@
 #define BST_MIN(a,b)    (((a) < (b)) ? (a) : (b))
 
 
-#if _MSC_VER < 1600
+#if (_MSC_VER < 1600) && !defined(__MINGW32__)
 
 namespace bst {
   namespace detail {

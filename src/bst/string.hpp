@@ -2,7 +2,7 @@
 
 #include "bst.hpp"
 #include <cstdlib>
-#include <Shlwapi.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <vadefs.h>
 
@@ -717,6 +717,11 @@ template <typename CharT, size_t PreAllocLen>
 class prealloc_string : public string_base<CharT>
 {
 protected:
+  using string_base<CharT>::m_buf;
+  using string_base<CharT>::m_len;
+  using string_base<CharT>::m_capacity;
+  using string_base<CharT>::m_isdynamic;
+  using string_base<CharT>::m_last_error;
   CharT m_content[PreAllocLen + 2];
 
   BST_INLINE
@@ -758,7 +763,7 @@ public:
   }
 
   /* copy-constructor */
-  prealloc_string(const string_base & str) BST_NOEXCEPT
+  prealloc_string(const string_base<CharT> & str) BST_NOEXCEPT
   {
     set_defaults();
     assign(str.c_data(), str.length());

@@ -7,7 +7,7 @@
 #ifndef _NTDEF_
 #define _NTDEF_ 
 
-typedef __success(return >= 0) LONG NTSTATUS;
+typedef LONG NTSTATUS;
 
 typedef NTSTATUS *PNTSTATUS;
 

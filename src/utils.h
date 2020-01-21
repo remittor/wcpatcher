@@ -10,7 +10,7 @@ int GetTickBetween(DWORD prev, DWORD now) noexcept
     return 0;
   if (prev < now)
     return (int)(now - prev);
-  return (int)((0xFFFFFFFF - prev) + now); 
+  return (int)((UINT_MAX - prev) + now); 
 }
 
 
