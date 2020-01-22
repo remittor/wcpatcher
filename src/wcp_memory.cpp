@@ -75,18 +75,17 @@ void LOG_BYTECODE(int log_level, LPVOID addr, size_t size) noexcept
   char buf[2049];
   PBYTE pb = (PBYTE)addr;
   if (size == 0) {
-    size_t sz = 0;
-    int k = 0;
-    while (k < 5) {
-      if (*pb++ == 0)
-        k++;
-      sz++;
+    const size_t cap = (sizeof(buf) / 3) - 8;
+    for (size_t i = 1; i < cap; i++) {
+      if (*(PDWORD)(pb + i) == 0 && pb[i + 4] == 0) {
+        size = i;
+        break;
+      }
     }
-    if (k < 5) {
-      LOGX(log_level, "ByteCode[%p] = <unknown size>", addr);
-      return;
-    }
-    size = sz - 5;
+  }
+  if (size == 0) {
+    LOGX(log_level, "ByteCode[%p] = <unknown size>", addr);
+    return;
   }
   memset(buf, 0, sizeof(buf));
   pb = (PBYTE)addr;  
