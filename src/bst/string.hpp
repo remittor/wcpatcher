@@ -668,13 +668,13 @@ protected:
   bool assign_fmt_internal(const CharT * fmt, va_list argptr) BST_NOEXCEPT
   {
     BYTE buf[250];
-    int sz;
+    SSIZE_T sz;
     if (is_wstring) {
       sz = vswprintf_s((LPWSTR)buf, sizeof(buf) / sizeof(WCHAR) - 2, (LPCWSTR)fmt, argptr);
     } else {
       sz = vsprintf_s((LPSTR)buf, sizeof(buf) - 2, (LPCSTR)fmt, argptr);
     }
-    return assign((const CharT *)buf, (size_t)sz);
+    return assign((const CharT *)buf, sz);
   }
 
 public:
@@ -701,13 +701,13 @@ protected:
   string_base & append_fmt_internal(const CharT * fmt, va_list argptr) BST_NOEXCEPT
   {
     BYTE buf[250];   // TODO: may be using _vscprintf ???
-    int sz;
+    SSIZE_T sz;
     if (is_wstring) {
       sz = vswprintf_s((LPWSTR)buf, sizeof(buf) / sizeof(WCHAR) - 2, (LPCWSTR)fmt, argptr);
     } else {
       sz = vsprintf_s((LPSTR)buf, sizeof(buf) - 2, (LPCSTR)fmt, argptr);
     }
-    return append((const CharT *)buf, (size_t)sz);
+    return append((const CharT *)buf, sz);
   }
 
 };
