@@ -1,6 +1,18 @@
 path_classifiers:
-  extlib:
+  generated:
+    - CMakeFiles
+    - lib
+    - out
+  library:
     - extlibs
+    - fake_ntdll
+  template:
+    - build
+  test: 
+    - test
+  docs:
+    - README.md
+    - License.txt
 queries:
   - exclude: cpp/use-of-goto
   - exclude: cpp/incorrect-string-type-conversion
