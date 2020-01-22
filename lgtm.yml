@@ -1,0 +1,24 @@
+path_classifiers:
+  extlib:
+    - extlibs
+queries:
+  - exclude: cpp/use-of-goto
+  - exclude: cpp/incorrect-string-type-conversion
+  - exclude: cpp/unsigned-comparison-zero
+  - exclude: cpp/wrong-type-format-argument
+extraction:
+  cpp:
+    prepare:
+      packages: 
+        - mingw-w64
+    after_prepare:
+      - export GIT=true
+    before_index:
+      - find ./ -type f -regex ".*/.*\.\(c\|h\|cpp\|hpp\)" -exec sed -i '/#include/s/\\/\//g' {} \;
+      - sed -i 's/__maybevalid/SAL__maybevalid/g' fake_ntdll/ntdef.h
+      - sed -i 's/__field_bcount_part/SAL__out_bcount_part/g' fake_ntdll/ntdef.h
+      - sed -i 's/__field_bcount_part_opt/SAL__out_bcount_part_opt/g' fake_ntdll/ntdef.h
+    index:
+      build_command:
+        - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain-mingw32.cmake -DCMAKE_BUILD_TYPE=Release
+        - make
