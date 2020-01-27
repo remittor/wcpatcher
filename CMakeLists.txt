@@ -12,7 +12,7 @@ include_directories (
 
 add_compile_options( -fms-extensions )
 add_compile_options( -fpermissive )
-add_compile_options( -Wmultichar )
+add_compile_options( -w )
 
 add_library(${TRJ} OBJECT
   src/bst/srw_lock.cpp
